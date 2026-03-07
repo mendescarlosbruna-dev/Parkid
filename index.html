@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+<title>ParkID</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#0d0d14;color:#eee;min-height:100vh}
+/* HEADER */
+header{background:#111118;border-bottom:2px solid #e8d800;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.logo{font-size:1.2rem;font-weight:900;color:#e8d800;display:flex;align-items:center;gap:8px}
+.logo-box{background:#e8d800;color:#000;width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900}
+.stats{display:flex;gap:8px}
+.stat{font-size:11px;padding:3px 10px;border:1px solid #333;border-radius:20px;color:#888}
+.stat b{color:#e8d800}
+/* TABS */
+nav{display:flex;background:#111118;border-bottom:1px solid #222;overflow-x:auto}
+.tab{flex:1;min-width:70px;padding:11px 8px;border:none;background:none;color:#666;font-size:12px;font-weight:700;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;text-align:center}
+.tab.on{color:#e8d800;border-bottom-color:#e8d800}
+/* MAIN */
+main{padding:14px;max-width:960px;margin:0 auto}
+.page{display:none}.page.on{display:block}
+/* CARD */
+.card{background:#181820;border:1px solid #272730;border-radius:10px;padding:16px;margin-bottom:14px}
+.card-title{font-size:13px;font-weight:700;color:#e8d800;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title::before{content:'';width:3px;height:14px;background:#e8d800;border-radius:2px;flex-shrink:0}
+/* FORM */
+.fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-bottom:12px}
+.fl label{display:block;font-size:10px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.fl input,.fl select{width:100%;background:#0d0d14;border:1px solid #2a2a36;color:#eee;padding:8px 10px;border-radius:6px;font-size:13px;outline:none}
+.fl input:focus,.fl select:focus{border-color:#e8d800}
+.fl select option{background:#181820}
+.fl input[readonly]{color:#e8d800;font-weight:700;cursor:default}
+/* MENSALISTA BOX */
+.mbox{background:#0a1a1a;border:1px solid #1a4040;border-radius:8px;padding:14px;margin-bottom:12px;display:none}
+.mbox.on{display:block}
+.mbox-title{font-size:10px;font-weight:700;color:#40d0c0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+/* BUTTONS */
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{padding:9px 16px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:#e8d800;color:#000}
+.btn-secondary{background:#181820;color:#eee;border:1px solid #333}
+.btn-danger{background:#c0002a;color:#fff}
+.btn-sm{padding:5px 10px;font-size:11px}
+/* VEHICLE GRID */
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.vc{background:#181820;border:1px solid #272730;border-radius:10px;overflow:hidden;transition:border-color .15s}
+.vc:hover{border-color:#e8d800}
+.vc-head{padding:10px 13px;background:#111118;border-bottom:1px solid #222;display:flex;align-items:center;justify-content:space-between}
+.plate{font-family:'Courier New',monospace;font-size:13px;font-weight:700;color:#e8d800;background:rgba(232,216,0,.08);padding:3px 9px;border-radius:4px;border:1px solid rgba(232,216,0,.2);letter-spacing:2px}
+.tags{display:flex;align-items:center;gap:5px}
+.dot{width:8px;height:8px;border-radius:50%;background:#30c060;flex-shrink:0}
+.dot.out{background:#555}
+.tag-m{font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;background:rgba(64,208,192,.12);color:#40d0c0;border:1px solid rgba(64,208,192,.25)}
+.vc-body{padding:12px;display:flex;gap:10px}
+.vc-data{flex:1;min-width:0}
+.drow{display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;gap:8px}
+.drow .lbl{color:#666;flex-shrink:0}
+.drow .val{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
+.val-green{color:#e8d800}.val-teal{color:#40d0c0}
+.qr-box{width:60px;height:60px;background:#fff;border-radius:4px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.qr-box canvas{display:block}
+.vc-foot{padding:8px 12px;border-top:1px solid #222;display:flex;gap:6px}
+/* SEARCH */
+.search{position:relative;margin-bottom:14px}
+.search input{width:100%;background:#181820;border:1px solid #272730;color:#eee;padding:9px 14px 9px 38px;border-radius:8px;font-size:13px;outline:none}
+.search input:focus{border-color:#e8d800}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none}
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:100;align-items:center;justify-content:center;padding:12px}
+.overlay.on{display:flex}
+.modal{background:#181820;border:1px solid #333;border-radius:14px;padding:20px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.modal-head h2{font-size:15px;font-weight:800}
+.modal-close{background:none;border:none;color:#666;font-size:22px;cursor:pointer;line-height:1;padding:0}
+.qr-display{background:#fff;border-radius:8px;padding:14px;text-align:center;margin-bottom:14px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.qr-display canvas{display:block}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.modal-field .mf-label{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px}
+.modal-field .mf-val{font-size:13px;font-weight:700}
+.modal-mens{background:rgba(64,208,192,.06);border:1px solid rgba(64,208,192,.2);border-radius:8px;padding:12px;margin-bottom:14px}
+.modal-mens-title{font-size:10px;font-weight:700;color:#40d0c0;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+.modal-mens-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+/* STICKER - só placa + QR */
+.sticker{background:#fff;color:#000;border:2px solid #000;border-radius:6px;padding:12px;text-align:center;display:inline-flex;flex-direction:column;align-items:center;gap:8px;margin:6px;vertical-align:top}
+.sticker-plate{font-family:'Courier New',monospace;font-size:15px;font-weight:900;letter-spacing:3px;border:2px solid #000;padding:4px 12px;border-radius:4px}
+.sticker-qr canvas{display:block}
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#30c060;color:#000;padding:10px 20px;border-radius:8px;font-weight:700;font-size:13px;z-index:200;transition:transform .3s;pointer-events:none;white-space:nowrap}
+.toast.on{transform:translateX(-50%) translateY(0)}
+/* EMPTY */
+.empty{text-align:center;padding:50px 20px;color:#555}
+.empty-icon{font-size:40px;margin-bottom:10px}
+/* PRINT */
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  body,html{background:#fff!important}
+  header,nav,.card,.search,.vc-foot,.overlay,.toast,.btns{display:none!important}
+  .page{display:none!important}
+  #page-print{display:block!important}
+  #page-print .card{display:none!important}
+  #sticker-area{display:block!important}
+  .sticker{border:1px solid #aaa}
+}
+@media(max-width:480px){
+  .stats .stat:nth-child(n+3){display:none}
+  main{padding:10px}
+  .modal{padding:16px}
+}
+.ibanner{display:none;position:fixed;bottom:0;left:0;right:0;background:#1a1a28;border-top:2px solid #e8d800;padding:12px 16px;z-index:200;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,.5)}
+.ibanner.on{display:flex}
+</style>
+
+  <!-- PWA MANIFEST inline -->
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22ParkID%22%2C%22short_name%22%3A%22ParkID%22%2C%22description%22%3A%22Sistema%20de%20estacionamento%20com%20QR%20Code%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230d0d14%22%2C%22theme_color%22%3A%22%23e8d800%22%2C%22orientation%22%3A%22portrait%22%7D">
+  <meta name="theme-color" content="#e8d800">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ParkID">
+  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAACmUlEQVR42u3bsQ2EMBBFwe2/QkqgC5wQkhFY8psvvQLM7YQ3Y2ZmZmZmZmZmZmZmZmZm9nv3NY/0lYOXTgHhB1QSgh9MWQh+JCUR+GGUheDHUBaBH0FZBD6+0gh8eGUB+OjKIvCxlUbgQysLwEdWGoEPrCwAH1dpBD6sAJAAkGIAfFSlEfigAkACQAJAAkACQAJAAkACQAJAAkACQAJgw8P1BgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADQAOANAADgDQAA4A0AAOANAADgDQAA4A0AAOANAADgDQAA4A0AAOANAADgDQAA4A0AOB5vAMDxAACA4wEAAMcDAACOBwAAHA8AADgeAABwPAAA4HgAAMDxAACA4wEAAMcDAACOBwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP4SKQAAEAAACAAABAAAAgAAAQCAAABAAAAgAAAQAAAIAAAEAAACAAABAIAAAEAAACAAABAAAAgAAAQAAAIAAAEAgAAAQAAAIAAAEAAACAAABAAAAgAAAQCAAABAAACgMgAJAAEAgAAAQAAAIAAAEAAACAAABAAAAgAAAQCAAABAAAAgAAAQABDI8QMgAAAQAAAIAAiUPn4AlAcAgdLHD4DyACBQ+vghUP74AVAeAARKHz8Eyh8/BMofPwjKHz4EcvwgyOGDIIcPhBy8mZmZmZmZmZmZmZmZ2a4tx4Dx36NmmXgAAAAASUVORK5CYII=">
+</head>
+<body>
+<div id="install-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#1a1a24;border-top:2px solid #e8d800;padding:12px 16px;z-index:300;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,.5)">
+  <div style="font-size:28px;flex-shrink:0">🅿</div>
+  <div style="flex:1;min-width:0">
+    <div style="font-size:13px;font-weight:700;color:#e8d800">Instalar ParkID</div>
+    <div style="font-size:11px;color:#888">Adicionar à tela inicial como app</div>
+  </div>
+  <button onclick="installApp()" style="background:#e8d800;color:#000;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">Instalar</button>
+  <button onclick="dismissBanner()" style="background:none;border:none;color:#666;font-size:20px;cursor:pointer;padding:0 4px;line-height:1">×</button>
+</div>
+
+
+<div class="ibanner" id="ibanner">
+  <div style="font-size:24px">P</div>
+  <div style="flex:1"><div style="font-size:13px;font-weight:700;color:#e8d800">Instalar ParkID</div><div style="font-size:11px;color:#888">Adicionar na tela inicial</div></div>
+  <button onclick="doInstall()" style="background:#e8d800;color:#000;border:none;padding:8px 14px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer">Instalar</button>
+  <button onclick="dismissInstall()" style="background:none;border:none;color:#666;font-size:20px;cursor:pointer;padding:0 6px">x</button>
+</div>
+<header>
+  <div class="logo"><div class="logo-box">P</div>Park<span style="color:#fff">ID</span></div>
+  <div class="stats">
+    <div class="stat">Total <b id="s-total">0</b></div>
+    <div class="stat">Dentro <b id="s-in">0</b></div>
+    <div class="stat">Mensalistas <b id="s-mens">0</b></div>
+  </div>
+</header>
+
+<nav>
+  <button class="tab on"  onclick="goTab('cadastro',this)">➕ Cadastrar</button>
+  <button class="tab"     onclick="goTab('veiculos',this)">🚗 Veículos</button>
+  <button class="tab"     onclick="goTab('print',this)">🖨️ Adesivos</button>
+  <button class="tab"     onclick="goTab('info',this)">ℹ️ Ajuda</button>
+</nav>
+
+<main>
+
+<!-- CADASTRO -->
+<div class="page on" id="page-cadastro">
+<div class="card">
+  <div class="card-title">Novo Veículo</div>
+  <div class="fg">
+    <div class="fl"><label>Placa *</label><input id="i-placa" placeholder="ABC-1234" maxlength="8" oninput="this.value=this.value.toUpperCase()"></div>
+    <div class="fl"><label>Modelo *</label><input id="i-modelo" placeholder="Gol, HB20, Palio..."></div>
+    <div class="fl"><label>Cor</label><input id="i-cor" placeholder="Branco, Prata..."></div>
+    <div class="fl"><label>Vaga</label><input id="i-vaga" placeholder="A-01, B-12..."></div>
+    <div class="fl"><label>Proprietário / Apt.</label><input id="i-prop" placeholder="João – Ap. 101"></div>
+    <div class="fl"><label>Tipo</label>
+      <select id="i-tipo">
+        <option>Carro</option><option>Moto</option><option>Caminhonete</option>
+        <option>Van</option><option>Ônibus</option><option>Outro</option>
+      </select>
+    </div>
+    <div class="fl"><label>Mensalista?</label>
+      <select id="i-mens" onchange="toggleMens()">
+        <option value="0">Não</option><option value="1">Sim ✓</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="mbox" id="mbox">
+    <div class="mbox-title">💳 Plano de Mensalidade</div>
+    <div class="fg">
+      <div class="fl"><label>Plano</label>
+        <select id="i-plano" onchange="setValor()">
+          <option value="cm">Carro e Moto — R$ 130,00</option>
+          <option value="sc">Só Carro — R$ 100,00</option>
+          <option value="sm">Só Moto — R$ 80,00</option>
+        </select>
+      </div>
+      <div class="fl"><label>Valor</label><input id="i-valor" readonly value="R$ 130,00"></div>
+      <div class="fl"><label>Dia do Vencimento</label><input type="number" id="i-venc" placeholder="Ex: 10" min="1" max="31"></div>
+    </div>
+  </div>
+
+  <div class="btns">
+    <button class="btn btn-primary" onclick="cadastrar()">✓ Cadastrar Veículo</button>
+    <button class="btn btn-secondary" onclick="limpar()">↺ Limpar</button>
+  </div>
+</div>
+</div>
+
+<!-- VEÍCULOS -->
+<div class="page" id="page-veiculos">
+  <div class="search"><span class="search-icon">🔍</span><input id="busca" placeholder="Buscar placa, modelo, proprietário..." oninput="filtrar(this.value)"></div>
+  <div class="vgrid" id="vgrid"></div>
+</div>
+
+<!-- ADESIVOS -->
+<div class="page" id="page-print">
+<div class="card">
+  <div class="card-title">Imprimir Adesivos</div>
+  <p style="color:#666;font-size:12px;margin-bottom:14px">QR Code gerado localmente. Funciona sem internet e imprime corretamente.</p>
+  <div class="btns">
+    <button class="btn btn-primary" onclick="gerarTodos()">🏷️ Gerar Todos</button>
+    <button class="btn btn-secondary" onclick="window.print()">🖨️ Imprimir Página</button>
+  </div>
+</div>
+<div class="card">
+  <div class="card-title">Pré-visualização</div>
+  <div id="sticker-area"><div class="empty"><div class="empty-icon">🏷️</div><p>Clique em "Gerar Todos"</p></div></div>
+</div>
+</div>
+
+<!-- AJUDA -->
+<div class="page" id="page-info">
+<div class="card">
+  <div class="card-title">⚠️ Como abrir este arquivo</div>
+  <div style="background:#110a00;border:1px solid #554400;border-radius:8px;padding:14px;margin-bottom:14px;font-size:13px;line-height:1.8;color:#ccc">
+    <b style="color:#e8d800">Não abra pelo Google Drive</b> — ele bloqueia o JavaScript.<br>
+    <b style="color:#e8d800">Passo a passo no Android:</b><br>
+    1. Abra <b>Meus Arquivos → Downloads</b><br>
+    2. <b>Segure</b> o arquivo → toque em <b>"Abrir com"</b><br>
+    3. Escolha <b>Chrome</b> ou <b>Samsung Internet</b><br>
+    4. No Chrome: 3 pontinhos → <b>"Adicionar à tela inicial"</b>
+  </div>
+  <div class="card-title">Como usar no dia a dia</div>
+  <ol style="color:#888;font-size:13px;line-height:2.1;padding-left:20px">
+    <li>Cadastre o veículo (funciona offline)</li>
+    <li>Marque se é mensalista — valor preenchido automaticamente</li>
+    <li>Gere e imprima o adesivo QR</li>
+    <li>Cole no para-brisas do veículo</li>
+    <li>Escaneie com qualquer câmera de celular na entrada/saída</li>
+  </ol>
+</div>
+</div>
+
+</main><!-- /main -->
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+<div class="modal">
+  <div class="modal-head">
+    <h2 id="m-title">—</h2>
+    <button class="modal-close" onclick="closeModal()">×</button>
+  </div>
+  <div id="m-body"></div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════
+     QR CODE ENGINE — testado e verificado
+     ═══════════════════════════════════════════ -->
+<script>
+(function(G){
+/* ---- Galois Field ---- */
+var EXP=new Array(256),LOG=new Array(256);
+for(var i=0;i<8;i++) EXP[i]=1<<i;
+for(var i=8;i<256;i++) EXP[i]=EXP[i-4]^EXP[i-5]^EXP[i-6]^EXP[i-8];
+for(var i=0;i<255;i++) LOG[EXP[i]]=i;
+function ge(n){while(n<0)n+=255;while(n>=256)n-=255;return EXP[n];}
+function gl(n){if(n<1)throw new Error('gl0');return LOG[n];}
+
+/* ---- Polynomial ---- */
+function Poly(a,s){this.c=[];for(var i=0;i<a.length;i++)this.c[i]=a[i];for(var i=0;i<s;i++)this.c.push(0);}
+Poly.prototype={
+  at:function(i){return this.c[i]||0;},
+  sz:function(){return this.c.length;},
+  mul:function(b){
+    var r=new Array(this.sz()+b.sz()-1);
+    for(var i=0;i<r.length;i++) r[i]=0;
+    for(var i=0;i<this.sz();i++){if(!this.at(i))continue;for(var j=0;j<b.sz();j++){if(!b.at(j))continue;r[i+j]^=ge(gl(this.at(i))+gl(b.at(j)));}}
+    return new Poly(r,0);
+  },
+  mod:function(b){
+    if(this.sz()-b.sz()<0) return this;
+    if(this.at(0)===0) return new Poly(this.c.slice(1),0).mod(b);
+    var ratio=gl(this.at(0))-gl(b.at(0));
+    var r=this.c.slice();
+    for(var i=0;i<b.sz();i++) r[i]^=ge(gl(b.at(i))+ratio);
+    return new Poly(r.slice(1),0).mod(b);
+  }
+};
+function ecPoly(n){var p=new Poly([1],0);for(var i=0;i<n;i++)p=p.mul(new Poly([1,ge(i)],0));return p;}
+
+/* ---- RS Blocks for level M ---- */
+var RSM=[null,
+  [1,44,34],[1,70,55],[1,100,80],[2,67,53],
+  [2,86,68,2,100,84],[4,101,81],[4,98,79,2,99,79],
+  [2,121,97,2,122,98],[3,146,115,2,147,116],[4,133,107,2,134,108]
+];
+function rsb(tn){var t=RSM[tn],r=[];for(var i=0;i<t.length;i+=3)for(var j=0;j<t[i];j++)r.push({tot:t[i+1],dat:t[i+2]});return r;}
+
+/* ---- Encode text → codewords ---- */
+function toBytes(s){
+  var b=[];
+  for(var i=0;i<s.length;i++){
+    var c=s.charCodeAt(i);
+    if(c<128) b.push(c);
+    else if(c<2048){b.push(0xC0|(c>>6));b.push(0x80|(c&63));}
+    else{b.push(0xE0|(c>>12));b.push(0x80|((c>>6)&63));b.push(0x80|(c&63));}
+  }
+  return b;
+}
+var CAPS=[0,34,55,80,106,136,154,192,230,271,321];
+function tn4(blen){for(var i=1;i<=10;i++)if(blen<=CAPS[i])return i;return 10;}
+
+function encode(bytes,tn){
+  var blocks=rsb(tn),cap=0;
+  for(var i=0;i<blocks.length;i++) cap+=blocks[i].dat;
+
+  var buf=[],bits=0;
+  function bit(v){var i=bits>>3;if(buf.length<=i)buf.push(0);if(v)buf[i]|=(128>>(bits&7));bits++;}
+  function word(v,n){for(var i=n-1;i>=0;i--)bit((v>>i)&1);}
+
+  word(4,4);
+  word(bytes.length,tn<10?8:16);
+  for(var i=0;i<bytes.length;i++) word(bytes[i],8);
+  if(bits+4<=cap*8) word(0,4);
+  while(bits%8) bit(0);
+  while(bits<cap*8){word(0xEC,8);if(bits<cap*8)word(0x11,8);}
+
+  var dc=[],ec=[],off=0;
+  for(var r=0;r<blocks.length;r++){
+    var d=blocks[r].dat,e=blocks[r].tot-d;
+    dc[r]=buf.slice(off,off+d); off+=d;
+    var ep=ecPoly(e),raw=new Poly(dc[r],ep.sz()-1),mp=raw.mod(ep);
+    ec[r]=[];
+    for(var i=0;i<e;i++){var mi=i+mp.sz()-e;ec[r][i]=(mi>=0)?mp.at(mi):0;}
+  }
+  var maxD=0,maxE=0;
+  for(var i=0;i<blocks.length;i++){if(blocks[i].dat>maxD)maxD=blocks[i].dat;if(blocks[i].tot-blocks[i].dat>maxE)maxE=blocks[i].tot-blocks[i].dat;}
+  var res=[];
+  for(var i=0;i<maxD;i++) for(var r=0;r<blocks.length;r++) if(i<dc[r].length) res.push(dc[r][i]);
+  for(var i=0;i<maxE;i++) for(var r=0;r<blocks.length;r++) if(i<ec[r].length) res.push(ec[r][i]);
+  return res;
+}
+
+/* ---- Matrix ---- */
+var G15=(1<<10)|(1<<8)|(1<<5)|(1<<4)|(1<<2)|(1<<1)|1;
+var G15M=(1<<14)|(1<<12)|(1<<10)|(1<<4)|(1<<1);
+var G18=(1<<12)|(1<<11)|(1<<10)|(1<<9)|(1<<8)|(1<<5)|(1<<2)|1;
+function bchD(n){var d=0;while(n){d++;n>>>=1;}return d;}
+function bchTI(d){var x=d<<10;while(bchD(x)-bchD(G15)>=0)x^=G15<<(bchD(x)-bchD(G15));return((d<<10)|x)^G15M;}
+function bchTN(d){var x=d<<12;while(bchD(x)-bchD(G18)>=0)x^=G18<<(bchD(x)-bchD(G18));return(d<<12)|x;}
+var PPT=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54]];
+function mkMask(p,r,c){switch(p){case 0:return(r+c)%2===0;case 1:return r%2===0;case 2:return c%3===0;case 3:return(r+c)%3===0;case 4:return(Math.floor(r/2)+Math.floor(c/3))%2===0;case 5:return(r*c)%2+(r*c)%3===0;case 6:return((r*c)%2+(r*c)%3)%2===0;case 7:return((r*c)%3+(r+c)%2)%2===0;}}
+
+function makeMatrix(tn,data,mp,test){
+  var sz=tn*4+17,m=[];
+  for(var i=0;i<sz;i++){m[i]=[];for(var j=0;j<sz;j++)m[i][j]=null;}
+
+  function probe(r,c){for(var dr=-1;dr<=7;dr++)for(var dc=-1;dc<=7;dc++){var nr=r+dr,nc=c+dc;if(nr<0||nr>=sz||nc<0||nc>=sz)continue;m[nr][nc]=((dr>=0&&dr<=6&&(dc===0||dc===6))||(dc>=0&&dc<=6&&(dr===0||dr===6))||(dr>=2&&dr<=4&&dc>=2&&dc<=4));}}
+  probe(0,0);probe(sz-7,0);probe(0,sz-7);
+
+  for(var i=8;i<sz-8;i++){if(m[i][6]===null)m[i][6]=(i%2===0);if(m[6][i]===null)m[6][i]=(i%2===0);}
+
+  var pp=PPT[tn-1];
+  for(var pi=0;pi<pp.length;pi++)for(var pj=0;pj<pp.length;pj++){
+    var pr=pp[pi],pc=pp[pj];if(m[pr][pc]!==null)continue;
+    for(var dr=-2;dr<=2;dr++)for(var dc=-2;dc<=2;dc++)m[pr+dr][pc+dc]=(dr===-2||dr===2||dc===-2||dc===2||dr===0&&dc===0);
+  }
+
+  var ti=bchTI((1<<3)|mp);
+  for(var i=0;i<15;i++){var v=!test&&((ti>>i)&1)===1;if(i<6)m[i][8]=v;else if(i<8)m[i+1][8]=v;else m[sz-15+i][8]=v;}
+  for(var i=0;i<15;i++){var v=!test&&((ti>>i)&1)===1;if(i<8)m[8][sz-i-1]=v;else if(i<9)m[8][15-i]=v;else m[8][15-i-1]=v;}
+  m[sz-8][8]=!test;
+
+  if(tn>=7){var tb=bchTN(tn);for(var i=0;i<18;i++){var v=!test&&((tb>>i)&1)===1;m[Math.floor(i/3)][i%3+sz-8-3]=v;m[i%3+sz-8-3][Math.floor(i/3)]=v;}}
+
+  var inc=-1,row=sz-1,bit=7,byte_=0;
+  for(var col=sz-1;col>0;col-=2){
+    if(col===6)col--;
+    while(true){
+      for(var c=0;c<2;c++){
+        if(m[row][col-c]===null){
+          var dark=false;
+          if(byte_<data.length)dark=((data[byte_]>>>bit)&1)===1;
+          if(mkMask(mp,row,col-c))dark=!dark;
+          m[row][col-c]=dark;
+          if(--bit<0){byte_++;bit=7;}
+        }
+      }
+      row+=inc;
+      if(row<0||row>=sz){row-=inc;inc=-inc;break;}
+    }
+  }
+  return m;
+}
+
+function lostPt(m,sz){
+  var lp=0;
+  for(var r=0;r<sz;r++)for(var c=0;c<sz;c++){
+    var cnt=0,d=m[r][c];
+    for(var dr=-1;dr<=1;dr++)for(var dc=-1;dc<=1;dc++){if(!dr&&!dc)continue;var nr=r+dr,nc=c+dc;if(nr<0||nr>=sz||nc<0||nc>=sz)continue;if(m[nr][nc]===d)cnt++;}
+    if(cnt>5)lp+=3+cnt-5;
+  }
+  for(var r=0;r<sz-1;r++)for(var c=0;c<sz-1;c++){var cnt=0;if(m[r][c])cnt++;if(m[r+1][c])cnt++;if(m[r][c+1])cnt++;if(m[r+1][c+1])cnt++;if(cnt===0||cnt===4)lp+=3;}
+  var dk=0;for(var r=0;r<sz;r++)for(var c=0;c<sz;c++)if(m[r][c])dk++;
+  lp+=Math.abs(100*dk/sz/sz-50)/5*10;
+  return lp;
+}
+
+/* ---- Public: generate QR canvas ---- */
+G.qrCanvas = function(text, size) {
+  try {
+    var bytes=toBytes(text);
+    var tn=tn4(bytes.length);
+    var data=encode(bytes,tn);
+
+    var best=0,bestLp=0;
+    for(var mp=0;mp<8;mp++){
+      var mx=makeMatrix(tn,data,mp,true);
+      var lp=lostPt(mx,tn*4+17);
+      if(mp===0||lp<bestLp){bestLp=lp;best=mp;}
+    }
+    var mx=makeMatrix(tn,data,best,false);
+    var sz=tn*4+17;
+    var cv=document.createElement('canvas');
+    cv.width=cv.height=size;
+    var ctx=cv.getContext('2d');
+    var cell=Math.floor((size-8)/sz);
+    var mg=Math.floor((size-cell*sz)/2);
+    ctx.fillStyle='#fff';ctx.fillRect(0,0,size,size);
+    ctx.fillStyle='#000';
+    for(var r=0;r<sz;r++)for(var c=0;c<sz;c++)if(mx[r][c])ctx.fillRect(mg+c*cell,mg+r*cell,cell,cell);
+    return cv;
+  } catch(e) {
+    return null;
+  }
+};
+
+})(window);
+</script>
+
+<!-- ═══════════════════════════════════════════
+     APP
+     ═══════════════════════════════════════════ -->
+<script>
+var DB = [];
+var CTR = 1;
+
+// Load saved data
+try {
+  var sv = localStorage.getItem('pid_db');
+  if (sv) DB = JSON.parse(sv);
+  var sc = localStorage.getItem('pid_ctr');
+  if (sc) CTR = parseInt(sc) || 1;
+} catch(e) {}
+
+var PLANOS = {
+  cm: { txt: 'Carro e Moto', val: 'R$ 130,00' },
+  sc: { txt: 'Só Carro',     val: 'R$ 100,00' },
+  sm: { txt: 'Só Moto',      val: 'R$ 80,00'  }
+};
+
+function save() {
+  try {
+    localStorage.setItem('pid_db', JSON.stringify(DB));
+    localStorage.setItem('pid_ctr', String(CTR));
+  } catch(e) {}
+  updateStats();
+}
+
+function updateStats() {
+  var tot=0, inside=0, mens=0;
+  for (var i=0; i<DB.length; i++) {
+    tot++;
+    if (DB[i].inside !== false) inside++;
+    if (DB[i].mens) mens++;
+  }
+  document.getElementById('s-total').innerHTML = tot;
+  document.getElementById('s-in').innerHTML    = inside;
+  document.getElementById('s-mens').innerHTML  = mens;
+}
+
+function pad4(n) { var s=''+n; while(s.length<4) s='0'+s; return 'VEI'+s; }
+function trim(s) { return (s||'').replace(/^\s+|\s+$/g,''); }
+
+function goTab(id, el) {
+  var pages = document.querySelectorAll('.page');
+  for (var i=0; i<pages.length; i++) pages[i].className = 'page';
+  var tabs = document.querySelectorAll('.tab');
+  for (var i=0; i<tabs.length; i++) tabs[i].className = 'tab';
+  document.getElementById('page-'+id).className = 'page on';
+  el.className = 'tab on';
+  if (id === 'veiculos') renderGrid(DB);
+}
+
+function toast(msg, color) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = color || '#30c060';
+  t.style.color = (color === '#c0002a') ? '#fff' : '#000';
+  t.className = 'toast on';
+  setTimeout(function() { t.className = 'toast'; }, 2600);
+}
+
+function toggleMens() {
+  var on = document.getElementById('i-mens').value === '1';
+  document.getElementById('mbox').className = on ? 'mbox on' : 'mbox';
+  if (on) setValor();
+}
+
+function setValor() {
+  var p = document.getElementById('i-plano').value;
+  document.getElementById('i-valor').value = PLANOS[p].val;
+}
+
+function cadastrar() {
+  var placa  = trim(document.getElementById('i-placa').value).toUpperCase();
+  var modelo = trim(document.getElementById('i-modelo').value);
+  if (!placa || !modelo) { toast('⚠️ Placa e modelo são obrigatórios', '#c0a000'); return; }
+  for (var i=0; i<DB.length; i++) {
+    if (DB[i].placa === placa) { toast('⚠️ Placa já cadastrada!', '#c0a000'); return; }
+  }
+  var ehM  = document.getElementById('i-mens').value === '1';
+  var pKey = ehM ? document.getElementById('i-plano').value : '';
+  var venc = ehM ? trim(document.getElementById('i-venc').value) : '';
+
+  var v = {
+    id:     pad4(CTR++),
+    placa:  placa,
+    modelo: modelo,
+    cor:    trim(document.getElementById('i-cor').value)  || '—',
+    vaga:   trim(document.getElementById('i-vaga').value) || '—',
+    prop:   trim(document.getElementById('i-prop').value) || '—',
+    tipo:   document.getElementById('i-tipo').value,
+    mens:   ehM,
+    pKey:   pKey,
+    pTxt:   pKey ? PLANOS[pKey].txt : '',
+    val:    pKey ? PLANOS[pKey].val : '',
+    venc:   venc,
+    data:   new Date().toLocaleDateString('pt-BR'),
+    inside: true
+  };
+  DB.push(v);
+  save();
+  limpar();
+  toast('✅ ' + v.placa + ' cadastrado!');
+  setTimeout(function() {
+    var tabs = document.querySelectorAll('.tab');
+    goTab('veiculos', tabs[1]);
+  }, 700);
+}
+
+function limpar() {
+  var ids = ['i-placa','i-modelo','i-cor','i-vaga','i-prop','i-venc'];
+  for (var i=0; i<ids.length; i++) document.getElementById(ids[i]).value = '';
+  document.getElementById('i-tipo').value  = 'Carro';
+  document.getElementById('i-mens').value  = '0';
+  document.getElementById('i-plano').value = 'cm';
+  document.getElementById('i-valor').value = 'R$ 130,00';
+  document.getElementById('mbox').className = 'mbox';
+}
+
+/* QR text — compacto para caber em typeNumber menor */
+function qrText(v) {
+  var a = [v.id, v.placa, v.modelo, v.cor, v.vaga, v.prop, v.tipo, v.mens?'S':'N'];
+  if (v.mens) { a.push(v.pTxt); a.push(v.val); if(v.venc) a.push('Venc:'+v.venc); }
+  return a.join('|');
+}
+
+function findV(id) {
+  for (var i=0; i<DB.length; i++) if (DB[i].id === id) return DB[i];
+  return null;
+}
+
+/* ---- Render grid ---- */
+function renderGrid(list) {
+  var g = document.getElementById('vgrid');
+  if (!list || !list.length) {
+    g.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🚗</div><p>Nenhum veículo encontrado.</p></div>';
+    return;
+  }
+  var html = '';
+  for (var i=0; i<list.length; i++) {
+    var v = list[i];
+    html += '<div class="vc">' +
+      '<div class="vc-head"><span class="plate">'+v.placa+'</span>' +
+      '<div class="tags">' +
+        (v.mens ? '<span class="tag-m">MENS.</span>' : '') +
+        '<span style="font-size:11px;color:#555">'+v.tipo+'</span>' +
+        '<div class="dot '+(v.inside===false?'out':'')+'"></div>' +
+      '</div></div>' +
+      '<div class="vc-body">' +
+        '<div class="vc-data">' +
+          '<div class="drow"><span class="lbl">Modelo</span><span class="val">'+v.modelo+'</span></div>' +
+          '<div class="drow"><span class="lbl">Cor</span><span class="val">'+v.cor+'</span></div>' +
+          '<div class="drow"><span class="lbl">Vaga</span><span class="val">'+v.vaga+'</span></div>' +
+          '<div class="drow"><span class="lbl">Dono</span><span class="val">'+v.prop+'</span></div>' +
+          (v.mens ? '<div class="drow"><span class="lbl">Plano</span><span class="val val-teal">'+v.pTxt+'</span></div>' +
+                    '<div class="drow"><span class="lbl">Valor</span><span class="val val-green">'+v.val+'</span></div>' +
+                    (v.venc ? '<div class="drow"><span class="lbl">Venc.</span><span class="val">Dia '+v.venc+'</span></div>' : '') : '') +
+        '</div>' +
+        '<div class="qr-box" id="qrt-'+v.id+'"></div>' +
+      '</div>' +
+      '<div class="vc-foot" onclick="event.stopPropagation()">' +
+        '<button class="btn btn-secondary btn-sm" onclick="openModal(\''+v.id+'\')">👁 QR</button>' +
+        '<button class="btn btn-secondary btn-sm" onclick="toggleInside(\''+v.id+'\')">'+(v.inside===false?'🔵 Entrada':'🔴 Saída')+'</button>' +
+        '<button class="btn btn-danger btn-sm" onclick="deleteV(\''+v.id+'\')">🗑</button>' +
+      '</div>' +
+    '</div>';
+  }
+  g.innerHTML = html;
+
+  // Draw QR thumbs after render
+  for (var i=0; i<list.length; i++) {
+    (function(v) {
+      var el = document.getElementById('qrt-'+v.id);
+      if (!el) return;
+      var cv = window.qrCanvas(qrText(v), 60);
+      if (cv) el.appendChild(cv);
+      else el.innerHTML = '<span style="font-size:9px;color:#999">QR</span>';
+    })(list[i]);
+  }
+}
+
+function filtrar(q) {
+  q = q.toLowerCase();
+  var r = [];
+  for (var i=0; i<DB.length; i++) {
+    var v = DB[i];
+    if (v.placa.toLowerCase().indexOf(q)>=0 ||
+        v.modelo.toLowerCase().indexOf(q)>=0 ||
+        v.prop.toLowerCase().indexOf(q)>=0 ||
+        v.vaga.toLowerCase().indexOf(q)>=0 ||
+        (v.pTxt||'').toLowerCase().indexOf(q)>=0) r.push(v);
+  }
+  renderGrid(r);
+}
+
+function openModal(id) {
+  var v = findV(id);
+  if (!v) return;
+  document.getElementById('m-title').textContent = v.placa + ' — ' + v.modelo;
+
+  var mensHtml = v.mens ?
+    '<div class="modal-mens">' +
+      '<div class="modal-mens-title">💳 Mensalidade</div>' +
+      '<div class="modal-mens-grid">' +
+        '<div class="modal-field"><div class="mf-label">Plano</div><div class="mf-val" style="color:#40d0c0">'+v.pTxt+'</div></div>' +
+        '<div class="modal-field"><div class="mf-label">Valor</div><div class="mf-val" style="color:#e8d800">'+v.val+'</div></div>' +
+        '<div class="modal-field"><div class="mf-label">Vencimento</div><div class="mf-val">'+(v.venc?'Dia '+v.venc:'—')+'</div></div>' +
+      '</div></div>' : '';
+
+  var fields = [['ID',v.id],['Placa',v.placa],['Modelo',v.modelo],['Cor',v.cor],['Vaga',v.vaga],['Tipo',v.tipo],['Proprietário',v.prop],['Cadastro',v.data]];
+  var fhtml = '';
+  for (var i=0; i<fields.length; i++)
+    fhtml += '<div class="modal-field"><div class="mf-label">'+fields[i][0]+'</div><div class="mf-val">'+fields[i][1]+'</div></div>';
+
+  document.getElementById('m-body').innerHTML =
+    '<div class="qr-display" id="modal-qr-wrap"></div>' +
+    mensHtml +
+    '<div class="modal-grid">'+fhtml+'</div>' +
+    '<div class="btns">' +
+      '<button class="btn btn-primary" onclick="printOne(\''+v.id+'\')">🖨️ Imprimir Adesivo</button>' +
+      '<button class="btn btn-secondary" onclick="closeModal()">Fechar</button>' +
+    '</div>';
+
+  document.getElementById('overlay').className = 'overlay on';
+
+  // Draw QR
+  setTimeout(function() {
+    var wrap = document.getElementById('modal-qr-wrap');
+    if (!wrap) return;
+    var cv = window.qrCanvas(qrText(v), 180);
+    if (cv) wrap.appendChild(cv);
+    else wrap.innerHTML = '<p style="color:#c00;font-size:12px">Erro ao gerar QR</p>';
+  }, 30);
+}
+
+function closeModal() {
+  document.getElementById('overlay').className = 'overlay';
+}
+
+function toggleInside(id) {
+  var v = findV(id);
+  if (!v) return;
+  v.inside = (v.inside === false) ? true : false;
+  save();
+  renderGrid(DB);
+}
+
+function deleteV(id) {
+  if (!confirm('Remover este veículo?')) return;
+  var nb = [];
+  for (var i=0; i<DB.length; i++) if (DB[i].id !== id) nb.push(DB[i]);
+  DB = nb;
+  save();
+  renderGrid(DB);
+  toast('Veículo removido', '#c0002a');
+}
+
+function mkSticker(v) {
+  var wrap = document.createElement('div');
+  wrap.className = 'sticker';
+  var plate = document.createElement('div');
+  plate.className = 'sticker-plate';
+  plate.textContent = v.placa;
+  var qrWrap = document.createElement('div');
+  qrWrap.className = 'sticker-qr';
+  var cv = window.qrCanvas(qrText(v), 140);
+  if (cv) qrWrap.appendChild(cv);
+  wrap.appendChild(plate);
+  wrap.appendChild(qrWrap);
+  return wrap;
+}
+
+function gerarTodos() {
+  var area = document.getElementById('sticker-area');
+  if (!DB.length) {
+    area.innerHTML = '<div class="empty"><div class="empty-icon">🚫</div><p>Nenhum veículo cadastrado.</p></div>';
+    return;
+  }
+  area.innerHTML = '';
+  for (var i=0; i<DB.length; i++) area.appendChild(mkSticker(DB[i]));
+  toast('✅ Adesivos prontos! Clique em Imprimir.');
+}
+
+function printOne(id) {
+  var v = findV(id);
+  if (!v) return;
+  closeModal();
+  var tabs = document.querySelectorAll('.tab');
+  goTab('print', tabs[2]);
+  var area = document.getElementById('sticker-area');
+  area.innerHTML = '';
+  area.appendChild(mkSticker(v));
+  setTimeout(function() { window.print(); }, 500);
+}
+
+/* ---- Init ---- */
+updateStats();
+
+if (!DB.length) {
+  DB = [
+    {id:'VEI0001',placa:'ABC-1234',modelo:'Gol',cor:'Branco',vaga:'A-01',prop:'João – Ap. 101',tipo:'Carro',mens:true,pKey:'sc',pTxt:'Só Carro',val:'R$ 100,00',venc:'10',data:new Date().toLocaleDateString('pt-BR'),inside:true},
+    {id:'VEI0002',placa:'XYZ-5678',modelo:'HB20',cor:'Prata',vaga:'B-03',prop:'Maria – Ap. 205',tipo:'Carro',mens:true,pKey:'cm',pTxt:'Carro e Moto',val:'R$ 130,00',venc:'5',data:new Date().toLocaleDateString('pt-BR'),inside:true},
+    {id:'VEI0003',placa:'DEF-9012',modelo:'CG 160',cor:'Preto',vaga:'M-02',prop:'Carlos Lima',tipo:'Moto',mens:false,pKey:'',pTxt:'',val:'',venc:'',data:new Date().toLocaleDateString('pt-BR'),inside:false}
+  ];
+  CTR = 4;
+  save();
+}
+</script>
+
+
+
+<script>
+var _dp = null;
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  _dp = e;
+  var b = document.getElementById('ibanner');
+  if (b && !localStorage.getItem('pwa_no')) b.className = 'ibanner on';
+});
+window.addEventListener('appinstalled', function() {
+  var b = document.getElementById('ibanner');
+  if (b) b.className = 'ibanner';
+  toast('App instalado com sucesso!');
+});
+function doInstall() {
+  var b = document.getElementById('ibanner');
+  if (b) b.className = 'ibanner';
+  if (_dp) {
+    _dp.prompt();
+    _dp.userChoice.then(function(r) { _dp = null; });
+  }
+}
+function dismissInstall() {
+  var b = document.getElementById('ibanner');
+  if (b) b.className = 'ibanner';
+  localStorage.setItem('pwa_no', '1');
+}
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js').then(function(reg) {
+      console.log('SW ok');
+    }).catch(function(e) {
+      console.log('SW fail:', e);
+    });
+  });
+}
+</script>
+</body>
+</html>
